@@ -1,0 +1,1 @@
+// ...existing code from client/src/components/Hero.jsx

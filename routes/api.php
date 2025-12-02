@@ -8,26 +8,7 @@ Route::apiResource('products', ProductController::class);
 
 use Illuminate\Http\Request;
 
-// Auth: Login (returns token)
-Route::post('login', function (Request $request) {
-	$request->validate([
-		'email' => 'required|email',
-		'password' => 'required',
-		'device_name' => 'required',
-	]);
-	$user = \App\Models\User::where('email', $request->email)->first();
-	if (! $user || ! \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
-		return response(['message' => 'Invalid credentials'], 401);
-	}
-	$token = $user->createToken($request->device_name)->plainTextToken;
-	return response(['token' => $token]);
-});
-
-// Auth: Logout
-Route::middleware('auth:sanctum')->post('logout', function (Request $request) {
-	$request->user()->currentAccessToken()->delete();
-	return response()->noContent();
-});
+// ...existing code...
 
 // Cart API (session-based)
 Route::prefix('cart')->group(function () {
