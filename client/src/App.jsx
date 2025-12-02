@@ -345,19 +345,21 @@ function Navbar() {
   );
 }
 
-return (
-  <div className="min-h-screen flex flex-col bg-gray-50">
-    <Toaster position="top-right" />
-    <Navbar />
-    <div className="flex-1">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/product/:id" element={<Product />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
+
+export default function App() {
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Toaster position="top-right" />
+      <Navbar />
+      <div className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/product/:id" element={<Product />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </div>
+      <Footer />
     </div>
-    <Footer />
-  </div>
-);
+  );
 }
