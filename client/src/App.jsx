@@ -2,6 +2,14 @@ import { Routes, Route, Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { fetchProducts, fetchProduct } from './api';
 import { fetchCart, addToCart, updateCart, removeFromCart, clearCart } from './cartApi';
+import CartTable from './components/CartTable';
+import ProductCard from './components/ProductCard';
+import ProductGrid from './components/ProductGrid';
+import CartIcon from './components/CartIcon';
+import Hero from './components/Hero';
+import { Toaster, toast } from 'react-hot-toast';
+import Footer from './components/Footer';
+import LoadingSkeleton from './components/LoadingSkeleton';
 
 function Home() {
   const [products, setProducts] = useState([]);
@@ -16,22 +24,20 @@ function Home() {
   }, []);
 
   return (
-    <div className="py-12 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-4 text-center">E-commerce Demo</h1>
-      <p className="text-lg text-gray-600 mb-8 text-center">Browse our products below.</p>
-      {loading && <div className="text-center text-gray-500">Loading...</div>}
-      {error && <div className="text-center text-red-500">{error}</div>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-        {products.map(product => (
-          <Link to={`/product/${product.id}`} key={product.id} className="bg-white rounded shadow p-4 hover:shadow-lg transition">
-            {product.image_url && <img src={product.image_url} alt={product.title} className="w-full h-48 object-cover rounded mb-4" />}
-            <h2 className="text-xl font-semibold mb-2">{product.title}</h2>
-            <p className="text-gray-600 mb-2 line-clamp-2">{product.description}</p>
-            <div className="text-lg font-bold text-blue-600">${product.price}</div>
-          </Link>
-        ))}
+    <>
+      <Hero />
+      <div id="products" className="py-12 max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold mb-4 text-center">Our Products</h2>
+        {error && <div className="text-center text-red-500">{error}</div>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+              <LoadingSkeleton key={i} className="h-72" />
+            ))
+            : <ProductGrid products={products} />}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -55,9 +61,10 @@ function Product() {
     try {
       await addToCart(product.id, 1);
       setAdded(true);
+      toast.success('Added to cart!');
       setTimeout(() => setAdded(false), 1500);
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setAdding(false);
     }
@@ -116,8 +123,9 @@ function Cart() {
     try {
       await updateCart(id, quantity);
       setCart(await fetchCart());
+      toast.success('Cart updated!');
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setUpdating(false);
     }
@@ -128,8 +136,9 @@ function Cart() {
     try {
       await removeFromCart(id);
       setCart(await fetchCart());
+      toast.success('Removed from cart!');
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setUpdating(false);
     }
@@ -140,14 +149,24 @@ function Cart() {
     try {
       await clearCart();
       setCart({});
+      toast.success('Cart cleared!');
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setUpdating(false);
     }
   };
 
-  if (loading) return <div className="py-12 text-center text-gray-500">Loading...</div>;
+  if (loading) return (
+    <div className="py-12 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4 text-center">Your Cart</h1>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <LoadingSkeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    </div>
+  );
   if (error) return <div className="py-12 text-center text-red-500">{error}</div>;
 
   return (
@@ -157,47 +176,13 @@ function Cart() {
         <div className="text-center text-gray-500">Your cart is empty.</div>
       ) : (
         <>
-          <table className="w-full mb-6">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="py-2">Product</th>
-                <th className="py-2">Price</th>
-                <th className="py-2">Quantity</th>
-                <th className="py-2">Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {cartItems.map(item => (
-                <tr key={item.id} className="border-b">
-                  <td className="py-2">{item.title}</td>
-                  <td className="py-2">${item.price}</td>
-                  <td className="py-2">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      disabled={updating}
-                      onChange={e => handleUpdate(item.id, Number(e.target.value))}
-                      className="w-16 border rounded px-2 py-1"
-                    />
-                  </td>
-                  <td className="py-2">${(item.price * item.quantity).toFixed(2)}</td>
-                  <td className="py-2">
-                    <button
-                      className="text-red-600 hover:underline"
-                      onClick={() => handleRemove(item.id)}
-                      disabled={updating}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-xl font-bold">Total: ${total.toFixed(2)}</div>
+          <CartTable
+            cartItems={cartItems}
+            updating={updating}
+            handleUpdate={handleUpdate}
+            handleRemove={handleRemove}
+          />
+          <div className="flex justify-end mb-6">
             <button
               className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               onClick={handleClear}
@@ -218,6 +203,7 @@ function Cart() {
 }
 
 import { login, logout, createProduct, updateProduct, deleteProduct } from './adminApi';
+import AdminProductTable from './components/AdminProductTable';
 
 function Admin() {
   const [token, setToken] = useState(localStorage.getItem('adminToken') || '');
@@ -335,45 +321,35 @@ function Admin() {
         {error && <div className="text-red-500 text-center">{error}</div>}
         {success && <div className="text-green-600 text-center">{success}</div>}
       </form>
-      <table className="w-full bg-white rounded shadow">
-        <thead>
-          <tr className="border-b">
-            <th className="py-2">Title</th>
-            <th className="py-2">Price</th>
-            <th className="py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map(product => (
-            <tr key={product.id} className="border-b">
-              <td className="py-2">{product.title}</td>
-              <td className="py-2">${product.price}</td>
-              <td className="py-2 flex gap-2">
-                <button onClick={() => handleEdit(product)} className="text-blue-600 hover:underline">Edit</button>
-                <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:underline">Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <AdminProductTable
+        products={products}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+      />
     </div>
   );
 }
 
 function Navbar() {
+  const [cart, setCart] = useState({});
+  useEffect(() => {
+    fetchCart().then(setCart);
+  }, []);
+  const count = Object.values(cart).reduce((a, b) => a + b, 0);
   return (
-    <nav className="flex justify-center gap-8 py-4 bg-white shadow mb-8">
+    <nav className="flex justify-center gap-8 py-4 bg-white shadow mb-8 items-center">
       <Link to="/" className="text-lg font-semibold text-gray-700 hover:text-blue-600">Home</Link>
-      <Link to="/cart" className="text-lg font-semibold text-gray-700 hover:text-blue-600">Cart</Link>
+      <CartIcon count={count} />
       <Link to="/admin" className="text-lg font-semibold text-gray-700 hover:text-blue-600">Admin</Link>
     </nav>
   );
 }
 
-export default function App() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+return (
+  <div className="min-h-screen flex flex-col bg-gray-50">
+    <Toaster position="top-right" />
+    <Navbar />
+    <div className="flex-1">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product/:id" element={<Product />} />
@@ -381,5 +357,7 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>
-  );
+    <Footer />
+  </div>
+);
 }
