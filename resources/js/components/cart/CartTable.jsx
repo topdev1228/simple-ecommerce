@@ -1,1 +1,0 @@
-// ...existing code from client/src/components/CartTable.jsx
